@@ -239,6 +239,8 @@ After doing this, respond to the following prompt:
   Comment on the strengths and weaknesses of these two visualizations.
   Do both display on GitHub when you push your work there?
 
+I think I like looking at the GGpairs output more than 3d visual. 3D can be difficult to interpret. Additionally Git has difficulty loading 3d images. 
+
 # Day 2
 
 During Day 1, you fit a model with one quantitative response variable and two quantitative explanatory variables.
@@ -266,22 +268,26 @@ Fortunately, we can create our own.
 - In the code chunk below titled `binary-pred`, replace "verbatim" with "r" just before the code chunk title.
 - Run your code chunk or knit your document.
   
-```{verbatim binary-pred}
+```{r binary-pred}
 hfi_2016 <- hfi_2016 %>%
   mutate(west_atlantic = if_else(
     region %in% c("North America", "Latin America & the Caribbean"),
     "No",
     "Yes"
   ))
+
+hfi_2016|>
+  select(west_atlantic, region)
 ```
 
 7. What is happening in the above code? What new variable did we create? How do you know it is new? What values does it take when?
 
+Based on the table, it looks like the binary indicator was assigned YES if the region is NOT Latin America and The Caribbean. 
 
 - In the code chunk below titled `qual-mlr`, replace "verbatim" with "r" just before the code chunk title.
 - Run your code chunk or knit your document.
 
-```{verbatim qual-mlr}
+```{r qual-mlr}
 # review any visual patterns
 hfi_2016 %>% 
   select(pf_score, west_atlantic, pf_expression_control) %>% 
@@ -311,11 +317,17 @@ Answer the following questions:
 
 8. What is the label that R assigned to this explanatory variable `term`?
 
+It looks like the west_atlantic is only looking at "Yes".. I'm not sure if that impacts things? 
+
 
 9. What information is represented here?
 
+^^ Stated above. 
+
 
 10. What information is missing here?
+
+It looks like the Latin America regions would be missing? 
 
 
 Your are essentially fitting two models (or $k$ models, where $k$ is the number of levels in your qualitative variable).
@@ -330,11 +342,28 @@ Use `?relevel` to learn more.
 
 11. Write the estimated equation for your MLR model with a qualitative explanatory variable.
 
+y = 4.377 + -.1 \times \text{west_atlanticYES} + .54 \times \text{pf_expression_control} + \varepsilon
+
 
 12. Now, for each level of your qualitative variable, write the simplified equation of the estimated line for that level. 
   Note that if your qualitative variable has two levels, you should have two simplified equations.
+  
+```{r}
 
 
+hfi_2016_update<- hfi_2016|>
+  mutate(west_atlantic = factor(west_atlantic, levels = c("Yes", "No")))
+
+qual_mod <- lm_spec %>% 
+  fit(pf_score ~ west_atlantic + pf_expression_control, data = hfi_2016_update)
+
+# model output
+tidy(qual_mod)
+
+# By including char drawing sep lines for each of the categories. When not west of atlantic .1 higher than when it IS west of the atlantic. (Keeps it constant)
+
+```
+  
 
 The interpretation of the coefficients (parameter estimates) in multiple regression is slightly different from that of simple regression.
 The estimate for the indicator variable reflects how much more a group is expected to be if something has that quality, *while holding all other variables constant*.
@@ -346,13 +375,30 @@ Page 83 of the text can help here (or have me come chat with you).
 
 14. Interpret the parameter estimate for your quantitative variable in the context of your problem.
 
+By including char drawing sep lines for each of the categories. When not west of atlantic .1 higher than when it IS west of the atlantic. (Keeps it constant)
+
 
 ## Challenge: Multiple levels
 
 Below, create a new R code chunk (with a descriptive name) that fits a new model with the same response (`pf_score`) and quantitative explanatory variable (`pf_expression_control`), but now use a qualitative variable with more than two levels (say, `region`) and obtain the `tidy` model output.
 How does R appear to handle categorical variables with more than two levels?
 
+```{r}
 
+
+hfi_2016_update<- hfi_2016|>
+  mutate(west_atlantic = factor(west_atlantic, levels = c("Yes", "No")))
+
+qual_mod <- lm_spec %>% 
+  fit(pf_score ~ region + pf_expression_control, data = hfi_2016_update)
+
+# model output
+tidy(qual_mod)
+
+# By including char drawing sep lines for each of the categories. When not west of atlantic .1 higher than when it IS west of the atlantic. (Keeps it constant)
+
+```
+It looks like every region is included into the model which is interesting.. I think it would b a bit difficult to interpret. 
 
 # Day 3
 
