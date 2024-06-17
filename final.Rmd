@@ -1,0 +1,14 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(tidycensus)
+
+```
+
+```{r}
+v17 <- load_variables(2017, "acs5", cache = TRUE)
+
+View(v17)
+
+```

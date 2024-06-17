@@ -376,8 +376,9 @@ Answer the following question:
 11. Is there any apparent pattern in the residuals plot?
   What does this indicate about the linearity of the relationship between the two variables?
   
-  There seems to be a bit of fanning from left to right which may indicate a violation in linearity. 
-
+  There seems to be a bit of fanning from left to right, but not enought where I'd say the assumption is violated. 
+  
+  
 **Nearly normal residuals**: To check this condition, we can look at a histogram of the residuals.
 
 - In the code chunk below titled `residual-histogram`, replace "verbatim" with "r" just before the code chunk title.
@@ -398,7 +399,7 @@ Answer the following question:
 
 13. Based on the residuals vs. fitted plot, does the constant variability condition appear to be violated?
   Why or why not?
-  I'd say no.. Nothing very obvious in terms of a pattern. 
+  I'd say no.. Nothing very obvious in terms of a pattern. There also seems to be a nice spread of points above and below the horizontal line. 
 
 
 

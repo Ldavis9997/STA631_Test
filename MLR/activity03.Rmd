@@ -33,6 +33,7 @@ Remember that [Emil Hvitfeldt](https://www.emilhvitfeldt.com/) (of Posit) has pu
 ```{r load-packages}
 library(tidyverse)
 library(tidymodels)
+library(ggplot2)
 
 ```
 
@@ -116,9 +117,9 @@ Now, we will obtain graphical and numerical summaries to describe the pairwise r
 - Run your code chunk or knit your document.
   
 ```{r pairs-plot}
-hfi_2016 %>% 
-  select(pf_score, pf_expression_control, pf_rank) %>% 
-  ggpairs()
+# hfi_2016 %>% 
+#   select(pf_score, pf_expression_control, pf_rank) %>% 
+#   ggpairs()
 ```
 
 
@@ -178,6 +179,8 @@ fit(pf_score ~ pf_expression_control + pf_rank, data = hfi_2016)
 
 # model output
 tidy(mlr_mod)
+
+glance(mlr_mod)
 ```
 
 After doing this, answer the following questions:
@@ -288,10 +291,10 @@ Based on the table, it looks like the binary indicator was assigned YES if the r
 - Run your code chunk or knit your document.
 
 ```{r qual-mlr}
-# review any visual patterns
-hfi_2016 %>% 
-  select(pf_score, west_atlantic, pf_expression_control) %>% 
-  ggpairs()
+# # review any visual patterns
+# hfi_2016 %>% 
+#   select(pf_score, west_atlantic, pf_expression_control) %>% 
+#   ggpairs()
 
 #fit the mlr model
 lm_spec <- linear_reg() %>%
@@ -433,11 +436,11 @@ $$
 - In the code chunk below titled `int-mlr`, replace "verbatim" with "r" just before the code chunk title.
 - Run your code chunk or knit your document.
 
-```{verbatim int-mlr}
+```{r int-mlr}
 # review any visual patterns
-hfi_2016 %>% 
-  select(pf_score, west_atlantic, pf_expression_control) %>% 
-  ggpairs()
+# hfi_2016 %>% 
+#   select(pf_score, west_atlantic, pf_expression_control) %>% 
+#   ggpairs()
 
 #fit the mlr model
 lm_spec <- linear_reg() %>%
@@ -481,10 +484,11 @@ One way to check this is to build our null model (no predictors) and then compar
 
 - In the code chunk below titled `mod-comp`, replace "verbatim" with "r" just before the code chunk title.
   
-```{verbatim mod-comp}
+```{r mod-comp}
 # null model
+
 null_mod <- lm_spec %>% 
-fit(response ~ 1, data = data)
+fit(pf_score ~ 1, data = hfi_2016)
 
 anova(
   extract_fit_engine(int_mod),
