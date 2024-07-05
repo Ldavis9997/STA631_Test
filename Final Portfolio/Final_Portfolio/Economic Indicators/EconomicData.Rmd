@@ -1,0 +1,497 @@
+```{r}
+#Loading in packages:
+library(tidyverse)
+library(tidycensus)
+library(dplyr)
+library(sf)
+library(rgdal)
+library(readxl)
+library(tidygeocoder)
+
+census_api_key("b2c4315e3f691181e727ab3c65ca45de22913a2a")
+```
+
+```{r}
+#Median Income in the past 12 months by place of birth in the US: 
+
+#Educational Attainment: 
+my_states<- c("AL","AR","AZ","CA","CO","CT","FL","GA","IA","IL","IN","KS","KY","LA","MA","MD","MI","MN","MO","MS","NC","NE","NH","NJ","NY","OH","OK","OR","PA","RI","SC","TN","TX","UT","VA","WA","WI","WV")
+
+my_counties <- c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County","San Joaquin County","Denver County","Pueblo County","Hartford County","New Haven County","Fairfield County","Duval County","Miami-Dade County","Pinellas County","Hillsborough County","DeKalb County","Richmond County","Delaware County","Bibb County","Chatham County","Pottawattamie County","Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County","Kendall County","Peoria County","Ogle County","Sangamon County","Vanderburgh County","Allen County","Marion County","Lake County County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Middlesex County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County","Plymouth County","Essex County","Hampden County","Baltimore County","Calhoun County","Bay County","Wayne County","Genesee County","Kent County","Rankin County","Kalamazoo County","Eaton County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Hennepin County","Monroe County","Ramsey County","Johnson County","Buchanan County","Buncombe County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County","Columbia County","Mercer County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Erie County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County","Summit County","Stark County","Cuyahoga County","Butler County","Lorain County","Scioto County","Lucas County","Trumbull County","Mahoning County","Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Lawrence County","Philadelphia County","Allegheny County","Luzerne County","York County","Providence County","Lexington County","Hamilton County","Knox County","Shelby County","Davidson County","Randall County","Travis County","Denton County","El Paso County","Tarrant County","Galveston County","Orange County","Bexar County","Weber County","Salt Lake County","Campbell County","Giles County","Wight County","Henrico County","Roanoke County","King County","Spokane County","Pierce County","Kenosha County","Dane County","Milwaukee County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County")
+
+library(data.table)
+my_counties1 <- fips_codes %>%
+  filter(state %in% my_states)
+test<- data.table(my_counties1)
+
+first<- test[county %in% c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County"), ]
+
+test_edu <- map2_dfr(
+  first$state_code, first$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = "B06011_001"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+additional1<- test[county %in% c("Kent County", "Randall County", "Knox County", "Travis County", "Tarrant County", "El Paso County",
+                                 "Galveston County", "Lorain County", "Mahoning County", "King County", "Wight County",
+                                 "Bexar County", "Hamilton County", "Denton County", "Lucas County", "Cuyahoga County", "Monroe County",
+                                 "Fairfield County", "Marion County", "Buchanan County"),]
+additional_2020 <- map2_dfr(
+  additional1$state_code, additional1$county_code,
+  ~ get_acs(
+    geography = "tract",
+     variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+additional2<- test[county %in% c("Stark County", "Butler County", "Trumbull County", "Scioto County", "Lawrence County", "Summit County",
+                                 "Middlesex County", "Shelby County"
+                                 )]
+additional2_2020 <- map2_dfr(
+  additional2$state_code, additional2$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+additional3<- test[county %in% c("Johnson County", "Calhoun County" )]
+additional3_2020 <- map2_dfr(
+  additional3$state_code, additional3$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+additional4<- test[county %in% c("Hillsborough County", "Peoria County", "Ogle County", "Eaton County", "Hennepin County", "Ramsey County", "Buncombe County"
+                                 , "Davidson County", "Spokane County", "Milwaukee County")]
+additional4_2020 <- map2_dfr(
+  additional4$state_code, additional4$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+second<- test[county %in% c("San Joaquin County","Denver County","Pueblo County", "Duval County","Miami-Dade County","Pinellas County", "DeKalb County","Richmond County", "Delaware County","Bibb County", "Chatham County"), ]
+second_2022 <- map2_dfr(
+  second$state_code, second$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+third<- test[county %in% c("Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County"), ]
+third_2022 <- map2_dfr(
+  third$state_code, third$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+fourth<-test[county %in% c("Sangamon County","Vanderburgh County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County", "Plymouth County", "Essex County","Hampden County","Baltimore County","Bay County"), ]
+fourth_2022 <- map2_dfr(
+  fourth$state_code, fourth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+fifth<- test[county %in% c("Bay County","Genesee County","Rankin County","Kalamazoo County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County"),]
+fifth_2022 <- map2_dfr(
+  fifth$state_code, fifth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+sixth<- test[county %in% c("Columbia County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County")]
+sixth_2022 <- map2_dfr(
+  sixth$state_code, sixth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+seventh<- test[county %in% c("Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Philadelphia County","Allegheny County","Luzerne County"),]
+seventh_2022 <- map2_dfr(
+  seventh$state_code, seventh$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+eighth<- test[county %in% c("Providence County", "York County", "Lexington County","Weber County","Salt Lake County","Campbell County", "Giles County", "Henrico County", "Roanoke County","Kenosha County","Dane County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County"),]
+eighth_2022 <- map2_dfr(
+  eighth$state_code, eighth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+first<- test[county %in% c("Hartford County", "New Haven County", "Pottawattamie County", "Kendall County", 
+                            "Allen County", "Lake County", "Wayne County", "Mercer County", "Erie County",
+                            "Orange County", "Pierce County" ), ]
+
+first_2021 <- map2_dfr(
+  first$state_code, first$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2021,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+st_write(first_2022, "combined_2021.shp")
+st_write(first_2021, "first_2021.shp")
+combined_2020_edu<- bind_rows(additional_2020, additional2_2020, additional3_2020, additional4_2020)
+combined_2022_edu<- bind_rows(first_2022, second_2022, third_2022, fourth_2022, fifth_2022, sixth_2022, seventh_2022, eighth_2022)
+st_write(combined_2022_edu, "combined_2022_edu.shp")
+st_write(combined_2020_edu, "combined_2020_edu.shp")
+
+
+
+
+
+```
+
+```{r}
+#Educational Attainment: 
+my_states<- c("AL","AR","AZ","CA","CO","CT","FL","GA","IA","IL","IN","KS","KY","LA","MA","MD","MI","MN","MO","MS","NC","NE","NH","NJ","NY","OH","OK","OR","PA","RI","SC","TN","TX","UT","VA","WA","WI","WV")
+
+my_counties <- c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County","San Joaquin County","Denver County","Pueblo County","Hartford County","New Haven County","Fairfield County","Duval County","Miami-Dade County","Pinellas County","Hillsborough County","DeKalb County","Richmond County","Delaware County","Bibb County","Chatham County","Pottawattamie County","Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County","Kendall County","Peoria County","Ogle County","Sangamon County","Vanderburgh County","Allen County","Marion County","Lake County County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Middlesex County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County","Plymouth County","Essex County","Hampden County","Baltimore County","Calhoun County","Bay County","Wayne County","Genesee County","Kent County","Rankin County","Kalamazoo County","Eaton County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Hennepin County","Monroe County","Ramsey County","Johnson County","Buchanan County","Buncombe County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County","Columbia County","Mercer County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Erie County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County","Summit County","Stark County","Cuyahoga County","Butler County","Lorain County","Scioto County","Lucas County","Trumbull County","Mahoning County","Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Lawrence County","Philadelphia County","Allegheny County","Luzerne County","York County","Providence County","Lexington County","Hamilton County","Knox County","Shelby County","Davidson County","Randall County","Travis County","Denton County","El Paso County","Tarrant County","Galveston County","Orange County","Bexar County","Weber County","Salt Lake County","Campbell County","Giles County","Wight County","Henrico County","Roanoke County","King County","Spokane County","Pierce County","Kenosha County","Dane County","Milwaukee County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County")
+
+library(data.table)
+my_counties1 <- fips_codes %>%
+  filter(state %in% my_states)
+test<- data.table(my_counties1)
+
+first<- test[county %in% c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County"), ]
+
+test_edu <- map2_dfr(
+  first$state_code, first$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+additional1<- test[county %in% c("Kent County", "Randall County", "Knox County", "Travis County", "Tarrant County", "El Paso County",
+                                 "Galveston County", "Lorain County", "Mahoning County", "King County", "Wight County",
+                                 "Bexar County", "Hamilton County", "Denton County", "Lucas County", "Cuyahoga County", "Monroe County",
+                                 "Fairfield County", "Marion County", "Buchanan County"),]
+additional_2020 <- map2_dfr(
+  additional1$state_code, additional1$county_code,
+  ~ get_acs(
+    geography = "tract",
+     variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+additional2<- test[county %in% c("Stark County", "Butler County", "Trumbull County", "Scioto County", "Lawrence County", "Summit County",
+                                 "Middlesex County", "Shelby County"
+                                 )]
+additional2_2020 <- map2_dfr(
+  additional2$state_code, additional2$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+additional3<- test[county %in% c("Johnson County", "Calhoun County" )]
+additional3_2020 <- map2_dfr(
+  additional3$state_code, additional3$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+additional4<- test[county %in% c("Hillsborough County", "Peoria County", "Ogle County", "Eaton County", "Hennepin County", "Ramsey County", "Buncombe County"
+                                 , "Davidson County", "Spokane County", "Milwaukee County")]
+additional4_2020 <- map2_dfr(
+  additional4$state_code, additional4$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+second<- test[county %in% c("San Joaquin County","Denver County","Pueblo County", "Duval County","Miami-Dade County","Pinellas County", "DeKalb County","Richmond County", "Delaware County","Bibb County", "Chatham County"), ]
+second_2022 <- map2_dfr(
+  second$state_code, second$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+third<- test[county %in% c("Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County"), ]
+third_2022 <- map2_dfr(
+  third$state_code, third$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+fourth<-test[county %in% c("Sangamon County","Vanderburgh County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County", "Plymouth County", "Essex County","Hampden County","Baltimore County","Bay County"), ]
+fourth_2022 <- map2_dfr(
+  fourth$state_code, fourth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+fifth<- test[county %in% c("Bay County","Genesee County","Rankin County","Kalamazoo County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County"),]
+fifth_2022 <- map2_dfr(
+  fifth$state_code, fifth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+sixth<- test[county %in% c("Columbia County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County")]
+sixth_2022 <- map2_dfr(
+  sixth$state_code, sixth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+seventh<- test[county %in% c("Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Philadelphia County","Allegheny County","Luzerne County"),]
+seventh_2022 <- map2_dfr(
+  seventh$state_code, seventh$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+eighth<- test[county %in% c("Providence County", "York County", "Lexington County","Weber County","Salt Lake County","Campbell County", "Giles County", "Henrico County", "Roanoke County","Kenosha County","Dane County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County"),]
+eighth_2022 <- map2_dfr(
+  eighth$state_code, eighth$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2022,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+first<- test[county %in% c("Hartford County", "New Haven County", "Pottawattamie County", "Kendall County", 
+                            "Allen County", "Lake County", "Wayne County", "Mercer County", "Erie County",
+                            "Orange County", "Pierce County" ), ]
+
+first_2021 <- map2_dfr(
+  first$state_code, first$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = c(highschool ="B15003_017", some_college = "B15003_019", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2021,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+st_write(first_2022, "combined_2021.shp")
+st_write(first_2021, "first_2021.shp")
+combined_2020_edu<- bind_rows(additional_2020, additional2_2020, additional3_2020, additional4_2020)
+combined_2022_edu<- bind_rows(first_2022, second_2022, third_2022, fourth_2022, fifth_2022, sixth_2022, seventh_2022, eighth_2022)
+st_write(combined_2022_edu, "combined_2022_edu.shp")
+st_write(combined_2020_edu, "combined_2020_edu.shp")
+
+
+
+
+
+```
+
+```{r}
+my_counties <- c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County","San Joaquin County","Denver County","Pueblo County","Hartford County","New Haven County","Fairfield County","Duval County","Miami-Dade County","Pinellas County","Hillsborough County","DeKalb County","Richmond County","Delaware County","Bibb County","Chatham County","Pottawattamie County","Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County","Kendall County","Peoria County","Ogle County","Sangamon County","Vanderburgh County","Allen County","Marion County","Lake County County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Middlesex County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County","Plymouth County","Essex County","Hampden County","Baltimore County","Calhoun County","Bay County","Wayne County","Genesee County","Kent County","Rankin County","Kalamazoo County","Eaton County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Hennepin County","Monroe County","Ramsey County","Johnson County","Buchanan County","Buncombe County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County","Columbia County","Mercer County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Erie County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County","Summit County","Stark County","Cuyahoga County","Butler County","Lorain County","Scioto County","Lucas County","Trumbull County","Mahoning County","Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Lawrence County","Philadelphia County","Allegheny County","Luzerne County","York County","Providence County","Lexington County","Hamilton County","Knox County","Shelby County","Davidson County","Randall County","Travis County","Denton County","El Paso County","Tarrant County","Galveston County","Orange County","Bexar County","Weber County","Salt Lake County","Campbell County","Giles County","Wight County","Henrico County","Roanoke County","King County","Spokane County","Pierce County","Kenosha County","Dane County","Milwaukee County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County")
+
+test<- c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County", "Kent County", "Randall County", "Knox County", "Travis County", "Tarrant County", "El Paso County","Galveston County", "Lorain County", "Mahoning County", "King County", "Wight County","Bexar County", "Hamilton County", "Denton County", "Lucas County", "Cuyahoga County", "Monroe County","Fairfield County", "Marion County", "Buchanan County","Stark County", "Butler County", "Trumbull County", "Scioto County", "Lawrence County", "Summit County","Middlesex County", "Shelby County","Johnson County", "Calhoun County","Hillsborough County", "Peoria County", "Ogle County", "Eaton County", "Hennepin County", "Ramsey County", "Buncombe County", "Davidson County", "Spokane County", "Milwaukee County","San Joaquin County","Denver County","Pueblo County", "Duval County","Miami-Dade County","Pinellas County", "DeKalb County","Richmond County", "Delaware County","Bibb County", "Chatham County", "Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County", "Sangamon County","Vanderburgh County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County", "Plymouth County", "Essex County","Hampden County","Baltimore County","Bay County","Genesee County","Rankin County","Kalamazoo County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County", "Columbia County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County", "Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Philadelphia County","Allegheny County","Luzerne County", "Providence County", "York County", "Lexington County","Weber County","Salt Lake County","Campbell County", "Giles County", "Henrico County", "Roanoke County","Kenosha County","Dane County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County")
+
+my_counties[!my_counties %in% test]
+length(test)
+
+
+library(data.table)
+my_counties1 <- fips_codes %>%
+  filter(state %in% my_states)
+test<- data.table(my_counties1)
+
+
+first<- test[county %in% c("Hartford County", "New Haven County", "Pottawattamie County", "Kendall County", 
+                            "Allen County", "Lake County", "Wayne County", "Mercer County", "Erie County",
+                            "Orange County", "Pierce County" ), ]
+
+first_2022 <- map2_dfr(
+  first$state_code, first$county_code,
+  ~ get_acs(
+    geography = "tract",
+    variables = "B25077_001E",
+    state = .x,
+    county = .y,
+    year = 2021,
+    survey = "acs5",
+    geometry = TRUE
+  )
+)
+
+st_write(first_2022, "combined_2021.shp")
+
+
+
+
+
+
+
+```
+
+```{r}
+#Median Household income:
+shape_2022<- read_sf('~/Library/Mobile Documents/com~apple~CloudDocs/Redlining Project/Redlining/fullscreen/Economic Indicators/Median Home Value/combined_2022.shp')
+shape_2021 <- read_sf('~/Library/Mobile Documents/com~apple~CloudDocs/Redlining Project/Redlining/fullscreen/Economic Indicators/Median Home Value/combined_2021.shp')
+shape_2020 <- read_sf('~/Library/Mobile Documents/com~apple~CloudDocs/Redlining Project/Redlining/fullscreen/Economic Indicators/Median Home Value/combined_2020.shp')
+
+
+test<- na.omit(shape_2022$estimate)
+medhome_pal <- colorNumeric(
+                            palette = "Greys",
+                            domain = test$estimate,
+                            na.color = NA)
+
+v17 <- load_variables(2022, "acs5", cache = TRUE)
+
+View(v17)
+
+
+
+```

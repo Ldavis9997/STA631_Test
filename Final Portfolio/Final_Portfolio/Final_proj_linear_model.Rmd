@@ -1,0 +1,1 @@
+# Using TidyCensus Data and Holc Grades to predict median household value. This can further the hypothesis of if HOLC grades have an impact on median home values today. 

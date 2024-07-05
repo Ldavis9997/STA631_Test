@@ -1,0 +1,243 @@
+```{r}
+#Loading in packages:
+library(tidyverse)
+library(tidycensus)
+library(dplyr)
+library(sf)
+library(readxl)
+library(tidygeocoder)
+
+census_api_key("b2c4315e3f691181e727ab3c65ca45de22913a2a")
+```
+
+```{r}
+#Educational Attainment: 
+my_states<- c("AL","AR","AZ","CA","CO","CT","FL","GA","IA","IL","IN","KS","KY","LA","MA","MD","MI","MN","MO","MS","NC","NE","NH","NJ","NY","OH","OK","OR","PA","RI","SC","TN","TX","UT","VA","WA","WI","WV")
+
+my_counties <- c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County","San Joaquin County","Denver County","Pueblo County","Hartford County","New Haven County","Fairfield County","Duval County","Miami-Dade County","Pinellas County","Hillsborough County","DeKalb County","Richmond County","Delaware County","Bibb County","Chatham County","Pottawattamie County","Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County","Kendall County","Peoria County","Ogle County","Sangamon County","Vanderburgh County","Allen County","Marion County","Lake County County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Middlesex County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County","Plymouth County","Essex County","Hampden County","Baltimore County","Calhoun County","Bay County","Wayne County","Genesee County","Kent County","Rankin County","Kalamazoo County","Eaton County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Hennepin County","Monroe County","Ramsey County","Johnson County","Buchanan County","Buncombe County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County","Columbia County","Mercer County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Erie County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County","Summit County","Stark County","Cuyahoga County","Butler County","Lorain County","Scioto County","Lucas County","Trumbull County","Mahoning County","Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Lawrence County","Philadelphia County","Allegheny County","Luzerne County","York County","Providence County","Lexington County","Hamilton County","Knox County","Shelby County","Davidson County","Randall County","Travis County","Denton County","El Paso County","Tarrant County","Galveston County","Orange County","Bexar County","Weber County","Salt Lake County","Campbell County","Giles County","Wight County","Henrico County","Roanoke County","King County","Spokane County","Pierce County","Kenosha County","Dane County","Milwaukee County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County")
+
+library(data.table)
+my_counties1 <- fips_codes %>%
+  filter(state %in% my_states)
+test<- data.table(my_counties1)
+
+#2020 DATA:
+
+
+
+se<- test[county %in% my_counties]
+
+#2019 DATA:
+additional_2019 <- map2_dfr(
+  se$state_code, se$county_code,
+  ~ get_acs(
+    geography = "tract",
+     variables = c(total = "B15003_001", highschool ="B15003_017", GED_alternative = "B15003_018", some_college_less_1_year = "B15003_019",
+                   some_college_1_or_more_years = "B15003_020", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023",professional_school = "B15003_024", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2019,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+
+additional_2020_5 <- map2_dfr(
+  se$state_code, se$county_code,
+  ~ get_acs(
+    geography = "tract",
+     variables = c(total = "B15003_001", highschool ="B15003_017", GED_alternative = "B15003_018", some_college_less_1_year = "B15003_019",
+                   some_college_1_or_more_years = "B15003_020", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023",professional_school = "B15003_024", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+# 2021 DATA:
+additional_2021 <- map2_dfr(
+  se$state_code, se$county_code,
+  ~ get_acs(
+    geography = "tract",
+     variables = c(total = "B15003_001", highschool ="B15003_017", GED_alternative = "B15003_018", some_college_less_1_year = "B15003_019",
+                   some_college_1_or_more_years = "B15003_020", associates_degree = "B15003_021", bachelors_degree = "B15003_022", masters_degree = "B15003_023",professional_school = "B15003_024", doctorate_degree = "B15003_025"),
+    state = .x,
+    county = .y,
+    year = 2021,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+
+year_and_2019 <- additional_2019 %>%
+  mutate(year = 2019) 
+
+
+condensed_2019 <- year_and_2019 %>%
+  group_by(GEOID) %>%
+  mutate(
+    estimate = ifelse(variable %in% c("highschool", "GED_alternative"), sum(estimate[variable %in% c("highschool", "GED_alternative")]), estimate),
+    variable = ifelse(variable %in% c("highschool", "GED_alternative"), "sum_highschool_ged", variable)
+  ) %>%
+  ungroup()
+
+condensed_2019 <- condensed_2019|>
+   group_by(GEOID) %>%
+  mutate(
+    estimate = ifelse(variable %in% c("some_college_less_1_year", "some_college_1_or_more_years"), sum(estimate[variable %in% c("some_college_less_1_year", "some_college_1_or_more_years")]), estimate),
+    variable = ifelse(variable %in% c("some_college_less_1_year", "some_college_1_or_more_years"), "some_college", variable)
+  ) %>%
+  ungroup()
+
+condensed_2019<- condensed_2019 %>%
+  group_by(GEOID) %>%
+  distinct(variable, .keep_all = TRUE) %>%
+  ungroup()
+
+condensed_2019<- condensed_2019|>
+  group_by(GEOID) %>%
+  mutate(total_population = if_else(variable == "total", estimate[variable == "total"], estimate[variable == "total"])) %>%
+  ungroup()
+
+condensed_2019<- condensed_2019|>
+  group_by(GEOID, variable)|>
+  mutate(percentage_education = estimate / total_population)
+
+year_and_2020 <- additional_2020_5 %>%
+  mutate(year = 2020)
+
+condensed_2020 <- year_and_2020 %>%
+  group_by(GEOID) %>%
+  mutate(
+    estimate = ifelse(variable %in% c("highschool", "GED_alternative"), sum(estimate[variable %in% c("highschool", "GED_alternative")]), estimate),
+    variable = ifelse(variable %in% c("highschool", "GED_alternative"), "sum_highschool_ged", variable)
+  ) %>%
+  ungroup()
+
+condensed_2020 <- condensed_2020|>
+   group_by(GEOID) %>%
+  mutate(
+    estimate = ifelse(variable %in% c("some_college_less_1_year", "some_college_1_or_more_years"), sum(estimate[variable %in% c("some_college_less_1_year", "some_college_1_or_more_years")]), estimate),
+    variable = ifelse(variable %in% c("some_college_less_1_year", "some_college_1_or_more_years"), "some_college", variable)
+  ) %>%
+  ungroup()
+
+condensed_2020<- condensed_2020 %>%
+  group_by(GEOID) %>%
+  distinct(variable, .keep_all = TRUE) %>%
+  ungroup()
+
+condensed_2020<- condensed_2020|>
+  group_by(GEOID) %>%
+  mutate(total_population = if_else(variable == "total", estimate[variable == "total"], estimate[variable == "total"])) %>%
+  ungroup()
+
+condensed_2020<- condensed_2020|>
+  group_by(GEOID, variable)|>
+  mutate(percentage_education = estimate / total_population)
+
+
+year_and_2021 <- additional_2021 %>%
+  mutate(year = 2021)
+
+condensed_2021 <- year_and_2021 %>%
+  group_by(GEOID) %>%
+  mutate(
+    estimate = ifelse(variable %in% c("highschool", "GED_alternative"), sum(estimate[variable %in% c("highschool", "GED_alternative")]), estimate),
+    variable = ifelse(variable %in% c("highschool", "GED_alternative"), "sum_highschool_ged", variable)
+  ) %>%
+  ungroup()
+
+condensed_2021 <- condensed_2021|>
+   group_by(GEOID) %>%
+  mutate(
+    estimate = ifelse(variable %in% c("some_college_less_1_year", "some_college_1_or_more_years"), sum(estimate[variable %in% c("some_college_less_1_year", "some_college_1_or_more_years")]), estimate),
+    variable = ifelse(variable %in% c("some_college_less_1_year", "some_college_1_or_more_years"), "some_college", variable)
+  ) %>%
+  ungroup()
+
+condensed_2021<- condensed_2021 %>%
+  group_by(GEOID) %>%
+  distinct(variable, .keep_all = TRUE) %>%
+  ungroup()
+
+condensed_2021<- condensed_2021|>
+  group_by(GEOID) %>%
+  mutate(total_population = if_else(variable == "total", estimate[variable == "total"], estimate[variable == "total"])) %>%
+  ungroup()
+
+condensed_2021<- condensed_2021|>
+  group_by(GEOID, variable)|>
+  mutate(percentage_education = estimate / total_population)
+
+combined_education<- bind_rows(condensed_2019, condensed_2020, condensed_2021)
+st_write(combined_education, "combined_education.shp")
+
+
+```
+
+```{r}
+#Median Home Value: 
+
+
+library(tidyverse)
+library(maps)
+library(tidycensus)
+library(leaflet)
+library(shiny)
+library(shinythemes) 
+library(sf)
+library(readxl)
+library(tidygeocoder)
+library(ggmap)
+library(bslib)
+library(shinyWidgets)
+library(car)
+library(plotrix)
+library(rsconnect)
+library(ggthemes)
+library(plotly)
+library(datasets)
+library(st)
+
+all_shape<- read_sf('cross.gpkg')
+
+list(all_shape %>% pull(GEOID) %>% unique())
+load_variables(year = 2020, dataset = "acs5") %>% View()
+
+my_states<- c("AL","AR","AZ","CA","CO","CT","FL","GA","IA","IL","IN","KS","KY","LA","MA","MD","MI","MN","MO","MS","NC","NE","NH","NJ","NY","OH","OK","OR","PA","RI","SC","TN","TX","UT","VA","WA","WI","WV")
+
+my_counties <- c("Jefferson County","Mobile County","Montgomery County","Pulaski County","Maricopa County","Fresno County","Los Angelos County","Alameda County","Sacramento County","San Diego County","San Francisco County","Santa Clara County","San Joaquin County","Denver County","Pueblo County","Hartford County","New Haven County","Fairfield County","Duval County","Miami-Dade County","Pinellas County","Hillsborough County","DeKalb County","Richmond County","Delaware County","Bibb County","Chatham County","Pottawattamie County","Scott County","Polk County","Dubuque County","Woodbury County","Black Hawk County","Arapahoe County","Cook County","Macon County","St. Clair County","Kendall County","Peoria County","Ogle County","Sangamon County","Vanderburgh County","Allen County","Marion County","Lake County County","St. Joseph County","Vigo County","Shawnee County","Sedgwick County","Kenton County","Middlesex County","Orleans Parish County","Bossier Parish County","Suffolk County","Norfolk County","Plymouth County","Essex County","Hampden County","Baltimore County","Calhoun County","Bay County","Wayne County","Genesee County","Kent County","Rankin County","Kalamazoo County","Eaton County","Muskegon County","Oakland County","Saginaw County","St. Louis County","Hennepin County","Monroe County","Ramsey County","Johnson County","Buchanan County","Buncombe County","Mecklenburg County","Durham County","Guilford County","Forsyth County","Lancaster County","Douglas County","Atlantic County","Bergen County","Camden County","Columbia County","Mercer County","Hudson County","Albany County","Broome County","Bronx County","Kings County","Erie County","Chemung County","Westchester County","New York County","Niagara County","Dutchess County","Queens County","Schenectady County","Onondaga County","Rensselaer County","Oneida County","Summit County","Stark County","Cuyahoga County","Butler County","Lorain County","Scioto County","Lucas County","Trumbull County","Mahoning County","Oklahoma County","Wagoner County","Multnomah County","Blair County","Lehigh County","Dauphin County","Cambria County","Lawrence County","Philadelphia County","Allegheny County","Luzerne County","York County","Providence County","Lexington County","Hamilton County","Knox County","Shelby County","Davidson County","Randall County","Travis County","Denton County","El Paso County","Tarrant County","Galveston County","Orange County","Bexar County","Weber County","Salt Lake County","Campbell County","Giles County","Wight County","Henrico County","Roanoke County","King County","Spokane County","Pierce County","Kenosha County","Dane County","Milwaukee County","Winnebago County","Racine County","Charleston County","Cabell County","Ohio County")
+
+
+library(data.table)
+my_counties1 <- fips_codes %>%
+  filter(state %in% my_states)
+test<- data.table(my_counties1)
+
+se<- test[county %in% my_counties]
+
+#2019 DATA:
+median <- map2_dfr(
+  se$state_code, se$county_code,
+  ~ get_acs(
+    geography = "tract",
+     variables = c("B25077_001"),
+    state = .x,
+    county = .y,
+    year = 2020,
+    survey = "acs5",
+    geometry = TRUE
+  ))
+
+
+st_write(median, "median_update1.shp")
+
+load_variables(year = 2020, dataset = "acs5") %>% View()
+
+
+
+
+
+```
